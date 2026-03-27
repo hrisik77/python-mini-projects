@@ -1,73 +1,58 @@
+import streamlit as st
 import random
 
+st.title("Number Guessing Game")
 
-def play_game():
-    secret = random.randint(1, 100)
-    max_attempts = 7
-    attempts = 0
-    guesses = []
+if 'secret' not in st.session_state:
+    st.session_state.secret = random.randint(1, 100)
+    st.session_state.attempts = 0
+    st.session_state.max_attempts = 7
+    st.session_state.guesses = []
+    st.session_state.game_over = False
+    st.session_state.won = False
 
-    print("=" * 40)
-    print("   🎯 NUMBER GUESSING GAME")
-    print("=" * 40)
-    print("I have picked a number between 1 and 100.")
-    print(f"You have {max_attempts} attempts to guess it!")
-    print("=" * 40)
+st.write("I have picked a number between **1 and 100**.")
+st.write(f"You have **{st.session_state.max_attempts} attempts** to guess it!")
 
-    while attempts < max_attempts:
-        remaining = max_attempts - attempts
-        print(f"\nAttempts remaining: {remaining}")
-        print(f"Your guesses so far: {guesses}")
+remaining = st.session_state.max_attempts - st.session_state.attempts
+st.info(f"Attempts remaining: {remaining}")
 
-        try:
-            guess = int(input("Enter your guess: "))
-        except ValueError:
-            print("⚠  Please enter a valid number!")
-            continue
+if st.session_state.guesses:
+    st.write(f"Your guesses: {st.session_state.guesses}")
 
-        if guess < 1 or guess > 100:
-            print("⚠  Please enter a number between 1 and 100!")
-            continue
+if not st.session_state.game_over:
+    guess = st.number_input(
+        "Enter your guess:",
+        min_value=1,
+        max_value=100,
+        step=1
+    )
 
-        attempts += 1
-        guesses.append(guess)
+    if st.button("Guess!"):
+        st.session_state.attempts += 1
+        st.session_state.guesses.append(guess)
 
-        if guess == secret:
-            print("\n" + "=" * 40)
-            print(f"🎉 CORRECT! The number was {secret}!")
-            print(
-                f"✅ You got it in {attempts} guess{'es' if attempts > 1 else ''}!")
-            print("=" * 40)
-            return True
-
-        elif guess > secret:
-            print(f"⬇  Too HIGH! Try something lower.")
+        if guess == st.session_state.secret:
+            st.success(
+                f"CORRECT! You got it in {st.session_state.attempts} guesses!"
+            )
+            st.session_state.game_over = True
+            st.session_state.won = True
+        elif guess > st.session_state.secret:
+            st.error("Too HIGH! Try lower.")
         else:
-            print(f"⬆  Too LOW! Try something higher.")
+            st.warning("Too LOW! Try higher.")
 
-    print("\n" + "=" * 40)
-    print(f"💀 GAME OVER! The number was {secret}.")
-    print("=" * 40)
-    return False
+        if (st.session_state.attempts >= st.session_state.max_attempts
+                and not st.session_state.won):
+            st.error(
+                f"GAME OVER! The number was {st.session_state.secret}."
+            )
+            st.session_state.game_over = True
 
-
-def main():
-    wins = 0
-    losses = 0
-    best_score = None
-
-    while True:
-        result = play_game()
-
-        if result:
-            wins += 1
-        else:
-            losses += 1
-
-        print(
-            f"\n📊 Score — Wins: {wins}  |  Losses: {losses}  |  Best: {best_score if best_score else '—'}")
-
-        again = input("\nPlay again? (yes / no): ").strip().lower()
-        if again not in ('yes', 'y'):
-            print("\nThanks for playing! Goodbye 👋")
-            break
+if st.session_state.game_over:
+    if st.button("Play Again"):
+        for key in list(st.session_state.keys()):
+            del st.session_state[key]
+        st.rerun()
+```
